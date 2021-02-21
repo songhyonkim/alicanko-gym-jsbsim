@@ -2,7 +2,7 @@ import gym
 import numpy as np
 from gym_jsbsim.tasks import Shaping, HeadingControlTask
 from gym_jsbsim.simulation import Simulation
-from gym_jsbsim.visualiser import FigureVisualiser, FlightGearVisualiser
+from gym_jsbsim.visualiser import FigureVisualiser
 from gym_jsbsim.aircraft import Aircraft, cessna172P
 from typing import Type, Tuple, Dict
 
@@ -21,7 +21,7 @@ class JsbSimEnv(gym.Env):
     docstrings have been adapted or copied from the OpenAI Gym source code.
     """
     JSBSIM_DT_HZ: int = 60  # JSBSim integration frequency
-    metadata = {'render.modes': ['human', 'flightgear']}
+    metadata = {'render.modes': ['human', 'csv']}
 
     def __init__(self, task_type: Type[HeadingControlTask], aircraft: Aircraft = cessna172P,
                  agent_interaction_freq: int = 5, shaping: Shaping=Shaping.STANDARD):
@@ -49,7 +49,6 @@ class JsbSimEnv(gym.Env):
         self.action_space: gym.spaces.Box = self.task.get_action_space()
         # set visualisation objects
         self.figure_visualiser: FigureVisualiser = None
-        self.flightgear_visualiser: FlightGearVisualiser = None
         self.step_delay = None
 
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, Dict]:
@@ -86,9 +85,6 @@ class JsbSimEnv(gym.Env):
 
         state = self.task.observe_first_state(self.sim)
 
-        if self.flightgear_visualiser:
-            self.flightgear_visualiser.configure_simulation_output(self.sim)
-
         return np.array(state)
 
     def _init_new_sim(self, dt, aircraft, initial_conditions):
@@ -96,7 +92,7 @@ class JsbSimEnv(gym.Env):
                           aircraft=aircraft,
                           init_conditions=initial_conditions)
 
-    def render(self, mode='flightgear', flightgear_blocking=True):
+    def render(self, mode='human'):
         """Renders the environment.
         The set of supported modes varies per environment. (And some
         environments do not support rendering at all.) By convention,
@@ -115,20 +111,12 @@ class JsbSimEnv(gym.Env):
               in implementations to use the functionality of this method.
 
         :param mode: str, the mode to render with
-        :param flightgear_blocking: waits for FlightGear to load before
-            returning if True, else returns immediately
         """
         if mode == 'human':
             if not self.figure_visualiser:
                 self.figure_visualiser = FigureVisualiser(self.sim,
                                                           self.task.get_props_to_output())
             self.figure_visualiser.plot(self.sim)
-        elif mode == 'flightgear':
-            if not self.flightgear_visualiser:
-                self.flightgear_visualiser = FlightGearVisualiser(self.sim,
-                                                                  self.task.get_props_to_output(),
-                                                                  flightgear_blocking)
-            self.flightgear_visualiser.plot(self.sim)
         else:
             super().render(mode=mode)
 
@@ -142,8 +130,6 @@ class JsbSimEnv(gym.Env):
             self.sim.close()
         if self.figure_visualiser:
             self.figure_visualiser.close()
-        if self.flightgear_visualiser:
-            self.flightgear_visualiser.close()
 
     def seed(self, seed=None):
         """
@@ -161,27 +147,3 @@ class JsbSimEnv(gym.Env):
         """
         gym.logger.warn("Could not seed environment %s", self)
         return
-
-
-class NoFGJsbSimEnv(JsbSimEnv):
-    """
-    An RL environment for JSBSim with rendering to FlightGear disabled.
-
-    This class exists to be used for training agents where visualisation is not
-    required. Otherwise, restrictions in JSBSim output initialisation cause it
-    to open a new socket for every single episode, eventually leading to
-    failure of the network.
-    """
-    metadata = {'render.modes': ['human']}
-
-    def _init_new_sim(self, dt: float, aircraft: Aircraft, initial_conditions: Dict):
-        return Simulation(sim_frequency_hz=dt,
-                          aircraft=aircraft,
-                          init_conditions=initial_conditions,
-                          allow_flightgear_output=False)
-
-    def render(self, mode='human', flightgear_blocking=True):
-        if mode == 'flightgear':
-            raise ValueError('flightgear rendering is disabled for this class')
-        else:
-            super().render(mode, flightgear_blocking)

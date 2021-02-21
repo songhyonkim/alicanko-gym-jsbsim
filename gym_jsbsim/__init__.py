@@ -15,11 +15,8 @@ The gym_jsbsim.Envs enum stores all registered environments as members with
        env = gym.make(gym_jsbsim.Envs.desired_environment.value)
 """
 
-for env_id, (task, plane, shaping, enable_flightgear) in utils.get_env_id_kwargs_map().items():
-    if enable_flightgear:
-        entry_point = 'gym_jsbsim.environment:JsbSimEnv'
-    else:
-        entry_point = 'gym_jsbsim.environment:NoFGJsbSimEnv'
+for env_id, (task, plane, shaping) in utils.get_env_id_kwargs_map().items():
+    entry_point = 'gym_jsbsim.environment:JsbSimEnv'
     kwargs = dict(task_type=task,
                   aircraft=plane,
                   shaping=shaping)
