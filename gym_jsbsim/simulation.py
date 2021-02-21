@@ -1,10 +1,9 @@
 import jsbsim
 import os
 import time
-from mpl_toolkits.mplot3d import Axes3D  # req'd for 3d plotting
 from typing import Dict, Union
 import gym_jsbsim.properties as prp
-from gym_jsbsim.aircraft import Aircraft, cessna172P
+from gym_jsbsim.aircraft import Aircraft, f16
 
 
 class Simulation(object):
@@ -12,13 +11,13 @@ class Simulation(object):
     A class which wraps an instance of JSBSim and manages communication with it.
     """
     encoding = 'utf-8'  # encoding of bytes returned by JSBSim Cython funcs
-    ROOT_DIR = os.path.abspath('C:/Users/alica/Documents/TEZ/jsbsim')
+    JSBSIM_ROOT_DIR = os.path.abspath("jsbsim")
     LONGITUDINAL = 'longitudinal'
     FULL = 'full'
 
     def __init__(self,
                  sim_frequency_hz: float = 60.0,
-                 aircraft: Aircraft = cessna172P,
+                 aircraft: Aircraft = f16,
                  init_conditions: Dict[prp.Property, float] = None):
         """
         Constructor. Creates an instance of JSBSim and sets initial conditions.
@@ -29,7 +28,7 @@ class Simulation(object):
         :param init_conditions: dict mapping properties to their initial values.
             Defaults to None, causing a default set of initial props to be used.
         """
-        self.jsbsim = jsbsim.FGFDMExec(root_dir=self.ROOT_DIR)
+        self.jsbsim = jsbsim.FGFDMExec(root_dir=self.JSBSIM_ROOT_DIR)
         self.jsbsim.set_debug_level(0)
         self.sim_dt = 1.0 / sim_frequency_hz
         self.aircraft = aircraft

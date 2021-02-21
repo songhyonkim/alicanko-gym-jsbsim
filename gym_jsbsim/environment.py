@@ -1,9 +1,10 @@
 import gym
 import numpy as np
-from gym_jsbsim.tasks import Shaping, HeadingControlTask
+from gym_jsbsim.task import Shaping
+from gym_jsbsim.flighttask import HeadingControlTask
 from gym_jsbsim.simulation import Simulation
 from gym_jsbsim.visualiser import FigureVisualiser
-from gym_jsbsim.aircraft import Aircraft, cessna172P
+from gym_jsbsim.aircraft import Aircraft, f16
 from typing import Type, Tuple, Dict
 
 
@@ -23,7 +24,7 @@ class JsbSimEnv(gym.Env):
     JSBSIM_DT_HZ: int = 60  # JSBSim integration frequency
     metadata = {'render.modes': ['human', 'csv']}
 
-    def __init__(self, task_type: Type[HeadingControlTask], aircraft: Aircraft = cessna172P,
+    def __init__(self, task_type: Type[HeadingControlTask], aircraft: Aircraft = f16,
                  agent_interaction_freq: int = 5, shaping: Shaping=Shaping.STANDARD):
         """
         Constructor. Inits some internal state, but JsbSimEnv.reset() must be
