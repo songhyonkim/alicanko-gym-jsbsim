@@ -3,7 +3,7 @@ import os
 import time
 from typing import Dict, Union
 import gym_jsbsim.properties as prp
-from gym_jsbsim.aircraft import Aircraft, f16
+from gym_jsbsim.aircraft import Aircraft, cessna172P
 
 
 class Simulation(object):
@@ -17,7 +17,7 @@ class Simulation(object):
 
     def __init__(self,
                  sim_frequency_hz: float = 60.0,
-                 aircraft: Aircraft = f16,
+                 aircraft: Aircraft = cessna172P,
                  init_conditions: Dict[prp.Property, float] = None):
         """
         Constructor. Creates an instance of JSBSim and sets initial conditions.

@@ -1,10 +1,11 @@
 import gym
 import numpy as np
 from gym_jsbsim.task import Shaping
-from gym_jsbsim.flighttask import HeadingControlTask
+from gym_jsbsim.headingcontroltask import HeadingControlTask
+from gym_jsbsim.heading2controltask import Heading2ControlTask
 from gym_jsbsim.simulation import Simulation
 from gym_jsbsim.visualiser import FigureVisualiser
-from gym_jsbsim.aircraft import Aircraft, f16
+from gym_jsbsim.aircraft import Aircraft, cessna172P
 from typing import Type, Tuple, Dict
 
 
@@ -24,8 +25,8 @@ class JsbSimEnv(gym.Env):
     JSBSIM_DT_HZ: int = 60  # JSBSim integration frequency
     metadata = {'render.modes': ['human', 'csv']}
 
-    def __init__(self, task_type: Type[HeadingControlTask], aircraft: Aircraft = f16,
-                 agent_interaction_freq: int = 5, shaping: Shaping=Shaping.STANDARD):
+    def __init__(self, task_type: Type[Heading2ControlTask], aircraft: Aircraft = cessna172P,
+                 agent_interaction_freq: int = 5, shaping: Shaping=Shaping.EXTRA):
         """
         Constructor. Inits some internal state, but JsbSimEnv.reset() must be
         called first before interacting with environment.
