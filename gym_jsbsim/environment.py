@@ -1,11 +1,10 @@
 import gym
 import numpy as np
 from gym_jsbsim.task import Shaping
-from gym_jsbsim.headingcontroltask import HeadingControlTask
 from gym_jsbsim.heading2controltask import Heading2ControlTask
 from gym_jsbsim.simulation import Simulation
 from gym_jsbsim.visualiser import FigureVisualiser
-from gym_jsbsim.aircraft import Aircraft, cessna172P
+from gym_jsbsim.aircraft import Aircraft, f16
 from typing import Type, Tuple, Dict
 
 
@@ -25,7 +24,7 @@ class JsbSimEnv(gym.Env):
     JSBSIM_DT_HZ: int = 60  # JSBSim integration frequency
     metadata = {'render.modes': ['human', 'csv']}
 
-    def __init__(self, task_type: Type[Heading2ControlTask], aircraft: Aircraft = cessna172P,
+    def __init__(self, task_type: Type[Heading2ControlTask], aircraft: Aircraft = f16,
                  agent_interaction_freq: int = 5, shaping: Shaping=Shaping.EXTRA):
         """
         Constructor. Inits some internal state, but JsbSimEnv.reset() must be
@@ -35,8 +34,8 @@ class JsbSimEnv(gym.Env):
         :param aircraft: the JSBSim aircraft to be used
         :param agent_interaction_freq: int, how many times per second the agent
             should interact with environment.
-        :param shaping: a HeadingControlTask.Shaping enum, what type of agent_reward
-            shaping to use (see HeadingControlTask for options)
+        :param shaping: a Heading2ControlTask.Shaping enum, what type of agent_reward
+            shaping to use (see Heading2ControlTask for options)
         """
         if agent_interaction_freq > self.JSBSIM_DT_HZ:
             raise ValueError('agent interaction frequency must be less than '

@@ -14,8 +14,6 @@ class Heading2ControlTask(FlightTask):
     A task in which the agent must perform steady, level flight maintaining its
     initial heading.
     """
-    THROTTLE_CMD = 0.8
-    MIXTURE_CMD = 0.8
     INITIAL_HEADING_DEG = 270
     DEFAULT_EPISODE_TIME_S = 60.
     ALTITUDE_SCALING_FT = 150
@@ -118,6 +116,11 @@ class Heading2ControlTask(FlightTask):
                             prp.initial_r_radps: 0,
                             prp.initial_roc_fpm: 0,
                             prp.initial_heading_deg: self.INITIAL_HEADING_DEG,
+                            prp.gear: 0,
+                            prp.gear_all_cmd: 0,
+                            prp.rudder_cmd: 0,
+                            prp.throttle_cmd: 0.8,
+                            prp.mixture_cmd: 1,
                             }
         return {**self.base_initial_conditions, **extra_conditions}
 
@@ -170,7 +173,6 @@ class Heading2ControlTask(FlightTask):
 
     def _new_episode_init(self, sim: Simulation) -> None:
         super()._new_episode_init(sim)
-        sim.set_throttle_mixture_controls(self.THROTTLE_CMD, self.MIXTURE_CMD)
         sim[self.steps_left] = self.steps_left.max
         sim[self.target_track_deg] = self._get_target_track()
 

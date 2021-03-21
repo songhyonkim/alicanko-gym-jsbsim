@@ -3,7 +3,7 @@ import os
 import time
 from typing import Dict, Union
 import gym_jsbsim.properties as prp
-from gym_jsbsim.aircraft import Aircraft, cessna172P
+from gym_jsbsim.aircraft import Aircraft, f16
 
 
 class Simulation(object):
@@ -17,7 +17,7 @@ class Simulation(object):
 
     def __init__(self,
                  sim_frequency_hz: float = 60.0,
-                 aircraft: Aircraft = cessna172P,
+                 aircraft: Aircraft = f16,
                  init_conditions: Dict[prp.Property, float] = None):
         """
         Constructor. Creates an instance of JSBSim and sets initial conditions.
@@ -110,37 +110,19 @@ class Simulation(object):
         """
         Loads an aircraft and initialises simulation conditions.
 
-        JSBSim creates an InitialConditions object internally when given an
-        XML config file. This method either loads a basic set of ICs, or
-        can be passed a dictionary with ICs. In the latter case a minimal IC
-        XML file is loaded, and then the dictionary values are fed in.
-
         :param dt: float, the JSBSim integration timestep in seconds
         :param model_name: string, name of aircraft to be loaded
         :param init_conditions: dict mapping properties to their initial values
         """
-        if init_conditions is not None:
-            # if we are specifying conditions, load a minimal file
-            ic_file = 'minimal_ic.xml'
-        else:
-            ic_file = 'basic_ic.xml'
-
-        ic_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ic_file)
-        self.jsbsim.load_ic(ic_path, useStoredPath=False)
         self.load_model(model_name)
         self.jsbsim.set_dt(dt)
-        # extract set of legal property names for this aircraft
-        # TODO: can translate the .split(" ")[0] once JSBSim bug has been fixed (in progress)
-
-        # now that IC object is created in JSBSim, specify own conditions
-        self.set_custom_initial_conditions(init_conditions)
-
+        self.set_initial_conditions(init_conditions)
         success = self.jsbsim.run_ic()
+        self.propulsion_init_running(-1)
         if not success:
             raise RuntimeError('JSBSim failed to init simulation conditions.')
 
-    def set_custom_initial_conditions(self,
-                                      init_conditions: Dict['prp.Property', float] = None) -> None:
+    def set_initial_conditions(self, init_conditions: Dict['prp.Property', float] = None) -> None:
         if init_conditions is not None:
             for prop, value in init_conditions.items():
                 self[prop] = value
@@ -155,7 +137,7 @@ class Simulation(object):
 
         :param init_conditions: dict mapping properties to their initial values
         """
-        self.set_custom_initial_conditions(init_conditions=init_conditions)
+        self.set_initial_conditions(init_conditions=init_conditions)
         no_output_reset_mode = 0
         self.jsbsim.reset_to_initial_conditions(no_output_reset_mode)
 
@@ -196,9 +178,18 @@ class Simulation(object):
         else:
             self.wall_clock_dt = self.sim_dt / time_factor
 
-    def start_engines(self):
-        """ Sets all engines running. """
-        self[prp.all_engine_running] = -1
+    def propulsion_init_running(self, i):
+        propulsion = self.jsbsim.get_propulsion()
+        n = propulsion.get_num_engines()
+        if i >= 0:
+            if i >= n:
+                raise IndexError("Tried to initialize a non-existent engine!")
+            propulsion.get_engine(i).init_running()
+            propulsion.get_steady_state()
+        else:
+            for j in range(n):
+                propulsion.get_engine(j).init_running()
+            propulsion.get_steady_state()
 
     def set_throttle_mixture_controls(self, throttle_cmd: float, mixture_cmd: float):
         """
@@ -215,8 +206,3 @@ class Simulation(object):
             self[prp.mixture_1_cmd] = mixture_cmd
         except KeyError:
             pass  # must be single-control aircraft
-
-    def raise_landing_gear(self):
-        """ Raises all aircraft landing gear. """
-        self[prp.gear] = 0.0
-        self[prp.gear_all_cmd] = 0.0

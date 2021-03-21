@@ -13,7 +13,7 @@ def main():
     env = gym.make(args.env)
     env = DummyVecEnv([lambda: env])
 
-    model = DDPG.load("28-02_22-06", env=env)
+    model = DDPG.load("F16FDM-1000000", env=env)
     model.set_env(env)
 
     done = False

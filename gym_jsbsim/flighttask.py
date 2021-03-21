@@ -36,8 +36,8 @@ class FlightTask(Task, ABC):
     base_initial_conditions = types.MappingProxyType(  # MappingProxyType makes dict immutable
         {prp.initial_altitude_ft: INITIAL_ALTITUDE_FT,
          prp.initial_terrain_altitude_ft: 0.00000001,
-         prp.initial_longitude_geoc_deg: -2.3273,
-         prp.initial_latitude_geod_deg: 51.3781  # corresponds to UoBath
+         prp.initial_longitude_geoc_deg: 32.565556,
+         prp.initial_latitude_geod_deg: 40.078889  # corresponds to Akinci
          }
     )
     last_agent_reward = Property('reward/last_agent_reward', 'agent reward from step; includes'
@@ -134,10 +134,7 @@ class FlightTask(Task, ABC):
         the value of any controls or environment properties not already defined
         in the task's initial conditions.
 
-        By default it simply starts the aircraft engines.
         """
-        sim.start_engines()
-        sim.raise_landing_gear()
         self._store_reward(RewardStub(1.0, 1.0), sim)
 
     @abstractmethod
