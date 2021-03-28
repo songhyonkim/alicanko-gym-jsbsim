@@ -8,12 +8,13 @@ from stable_baselines3 import DDPG
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("env", type=str)
+    parser.add_argument("model", type=str)
     args = parser.parse_args()
 
     env = gym.make(args.env)
     env = DummyVecEnv([lambda: env])
 
-    model = DDPG.load("F16FDM-1000000", env=env)
+    model = DDPG.load(args.model, env=env)
     model.set_env(env)
 
     done = False
