@@ -31,7 +31,7 @@ def work():
     global aileron
     global env
     threading.Timer(0.02, work).start()
-    action = np.array([aileron, elevator, 0.0])
+    action = np.array([aileron, elevator])
     state, reward, done, _ = env.step(action)
 
     print("action =", action, " ---> State =", state, " : Reward =", reward)
