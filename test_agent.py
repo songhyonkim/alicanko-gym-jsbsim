@@ -1,20 +1,21 @@
 import gym
 import argparse
 import gym_jsbsim
+from gym_jsbsim.agents import Agents
 from stable_baselines3.common.vec_env import DummyVecEnv
-from stable_baselines3 import DDPG
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("env", type=str)
+    parser.add_argument("algorithm", type=str)
     parser.add_argument("model", type=str)
     args = parser.parse_args()
 
     env = gym.make(args.env)
     env = DummyVecEnv([lambda: env])
 
-    model = DDPG.load(args.model, env=env)
+    model = Agents.load_model(env, args.algorithm, args.model)
     model.set_env(env)
 
     done = False

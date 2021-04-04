@@ -1,1 +1,1 @@
-py train_ddpg_agent.py JSBSim-Heading2ControlTask-F16-Shaping.EXTRA_SEQUENTIAL-v0 1000000 1
+py train_agent.py JSBSim-Heading2ControlTask-F16-Shaping.EXTRA_SEQUENTIAL-v0 ddpg 1000000 1
