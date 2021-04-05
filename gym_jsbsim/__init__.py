@@ -3,7 +3,7 @@ import enum
 from gym_jsbsim import utils
 
 """
-This script registers all combinations of task, aircraft, shaping settings
+This script registers all combinations of task, and aircraft
  etc. with OpenAI Gym so that they can be instantiated with a gym.make(id)
  command.
 
@@ -13,11 +13,10 @@ The gym_jsbsim.Envs enum stores all registered environments as members with
        env = gym.make(gym_jsbsim.Envs.desired_environment.value)
 """
 
-for env_id, (task, plane, shaping) in utils.get_env_id_kwargs_map().items():
+for env_id, (task, plane) in utils.get_env_id_kwargs_map().items():
     entry_point = 'gym_jsbsim.environment:JsbSimEnv'
     kwargs = dict(task_type=task,
-                  aircraft=plane,
-                  shaping=shaping)
+                  aircraft=plane)
     gym.envs.registration.register(id=env_id,
                                    entry_point=entry_point,
                                    kwargs=kwargs)

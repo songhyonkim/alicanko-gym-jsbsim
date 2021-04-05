@@ -23,7 +23,7 @@ class Agents:
                         batch_size=64,
                         tau=0.001,
                         gamma=0.99,
-                        train_freq=(5, "step"),
+                        train_freq=(10, "step"),
                         action_noise=action_noise,
                         verbose=1,
                         tensorboard_log="./tensor_logs/")
