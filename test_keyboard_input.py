@@ -8,7 +8,7 @@ import threading
 
 aileron = 0.0
 elevator = 0.0
-env = gym.make('JSBSim-Heading2ControlTask-F16-Shaping.STANDARD-v0')
+env = gym.make('JSBSim-Heading2ControlTask-F16')
 
 
 def on_release(key):
