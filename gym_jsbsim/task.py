@@ -1,6 +1,5 @@
 import gym
 import numpy as np
-import types
 import math
 import warnings
 import gym_jsbsim.properties as prp
@@ -89,19 +88,6 @@ class FlightTask(Task, ABC):
         (optional) _new_episode_init(): performs any control input/initialisation on episode reset
         (optional) _update_custom_properties: updates any custom properties in the sim
     """
-    INITIAL_ALTITUDE_FT = 5000
-    base_state_variables = (prp.altitude_sl_ft, prp.pitch_rad, prp.roll_rad,
-                            prp.u_fps, prp.v_fps, prp.w_fps,
-                            prp.p_radps, prp.q_radps, prp.r_radps,
-                            prp.aileron_left, prp.aileron_right, prp.elevator,
-                            prp.rudder)
-    base_initial_conditions = types.MappingProxyType(  # MappingProxyType makes dict immutable
-        {prp.initial_altitude_ft: INITIAL_ALTITUDE_FT,
-         prp.initial_terrain_altitude_ft: 0.00000001,
-         prp.initial_longitude_geoc_deg: 32.565556,
-         prp.initial_latitude_geod_deg: 40.078889  # corresponds to Akinci
-         }
-    )
     last_agent_reward = Property('reward/last_agent_reward', 'agent reward from step; includes'
                                                              'potential-based shaping reward')
     state_variables: Tuple[BoundedProperty, ...]
@@ -138,7 +124,7 @@ class FlightTask(Task, ABC):
             self._validate_state(state, done, action, reward)
         self._store_reward(reward, sim)
         self.last_state = state
-        info = {'reward': reward}
+        info = {'reward': reward, 'action': action}
 
         return state, reward, done, info
 
@@ -200,7 +186,7 @@ class FlightTask(Task, ABC):
     def get_state_space(self) -> gym.Space:
         state_lows = np.array([state_var.min for state_var in self.state_variables])
         state_highs = np.array([state_var.max for state_var in self.state_variables])
-        return gym.spaces.Box(low=state_lows, high=state_highs, dtype='float32')
+        return gym.spaces.Box(low=state_lows, high=state_highs, dtype=float)
 
     def get_action_space(self) -> gym.Space:
         action_lows = np.array([act_var.min for act_var in self.action_variables])
@@ -213,16 +199,10 @@ class Heading2ControlTask(FlightTask):
     A task in which the agent must perform steady, level flight maintaining its
     initial heading.
     """
-    THROTTLE_CMD = 0.8
-    MIXTURE_CMD = 0.8
+    INITIAL_ALTITUDE_FT = 5000
     INITIAL_HEADING_DEG = 270
     DEFAULT_EPISODE_TIME_S = 60.
-    ALTITUDE_SCALING_FT = 150
-    TRACK_ERROR_SCALING_DEG = 8
-    ROLL_ERROR_SCALING_RAD = 0.15  # approx. 8 deg
-    SIDESLIP_ERROR_SCALING_DEG = 3.
-    MIN_STATE_QUALITY = 0.0  # terminate if state 'quality' is less than this
-    MAX_ALTITUDE_DEVIATION_FT = 1000  # terminate if altitude error exceeds this
+    """New variables"""
     target_track_deg = BoundedProperty('target/track-deg', 'desired heading [deg]',
                                        prp.heading_deg.min, prp.heading_deg.max)
     track_error_deg = BoundedProperty('error/track-error-deg',
@@ -231,7 +211,6 @@ class Heading2ControlTask(FlightTask):
                                         'error to desired altitude [ft]',
                                         prp.altitude_sl_ft.min,
                                         prp.altitude_sl_ft.max)
-    action_variables = (prp.aileron_cmd, prp.elevator_cmd, prp.rudder_cmd)
 
     def __init__(self, step_frequency_hz: float, aircraft: Aircraft, episode_time_s: float = DEFAULT_EPISODE_TIME_S):
         """
@@ -242,30 +221,41 @@ class Heading2ControlTask(FlightTask):
         """
         self.max_time_s = episode_time_s
         episode_steps = math.ceil(self.max_time_s * step_frequency_hz)
-        self.steps_left = BoundedProperty('info/steps_left', 'steps remaining in episode', 0,
-                                          episode_steps)
+        self.steps_left = BoundedProperty('info/steps_left', 'steps remaining in episode', 0, episode_steps)
         self.aircraft = aircraft
-        self.extra_state_variables = (self.altitude_error_ft, prp.sideslip_deg,
-                                      self.track_error_deg, self.steps_left)
-        self.state_variables = FlightTask.base_state_variables + self.extra_state_variables
+        self.state_variables = (self.altitude_error_ft,
+                                self.track_error_deg,
+                                self.steps_left,
+                                prp.pitch_rad,
+                                prp.roll_rad,
+                                prp.v_down_fps,
+                                prp.vc_fps,
+                                prp.p_radps,
+                                prp.q_radps,
+                                prp.r_radps)
+        self.action_variables = (prp.aileron_cmd, prp.elevator_cmd)
         super().__init__()
 
     def get_initial_conditions(self) -> Dict[Property, float]:
-        extra_conditions = {prp.initial_u_fps: self.aircraft.get_cruise_speed_fps(),
-                            prp.initial_v_fps: 0,
-                            prp.initial_w_fps: 0,
-                            prp.initial_p_radps: 0,
-                            prp.initial_q_radps: 0,
-                            prp.initial_r_radps: 0,
-                            prp.initial_roc_fpm: 0,
-                            prp.initial_heading_deg: self.INITIAL_HEADING_DEG,
-                            prp.gear: 0,
-                            prp.gear_all_cmd: 0,
-                            prp.rudder_cmd: 0,
-                            prp.throttle_cmd: 0.8,
-                            prp.mixture_cmd: 1,
-                            }
-        return {**self.base_initial_conditions, **extra_conditions}
+        init_conditions = {prp.initial_altitude_ft: self.INITIAL_ALTITUDE_FT,
+                           prp.initial_terrain_altitude_ft: 0.00000001,
+                           prp.initial_longitude_geoc_deg: 32.565556,
+                           prp.initial_latitude_geod_deg: 40.078889,  # corresponds to Akinci
+                           prp.initial_u_fps: self.aircraft.get_cruise_speed_fps(),
+                           prp.initial_v_fps: 0,
+                           prp.initial_w_fps: 0,
+                           prp.initial_p_radps: 0,
+                           prp.initial_q_radps: 0,
+                           prp.initial_r_radps: 0,
+                           prp.initial_roc_fpm: 0,
+                           prp.initial_heading_deg: self.INITIAL_HEADING_DEG,
+                           prp.gear: 0,
+                           prp.gear_all_cmd: 0,
+                           prp.rudder_cmd: 0,
+                           prp.throttle_cmd: 0.8,
+                           prp.mixture_cmd: 1,
+                           }
+        return init_conditions
 
     def _update_custom_properties(self, sim: Simulation) -> None:
         self._update_track_error(sim)
@@ -273,10 +263,9 @@ class Heading2ControlTask(FlightTask):
         self._decrement_steps_left(sim)
 
     def _update_track_error(self, sim: Simulation):
-        v_north_fps, v_east_fps = sim[prp.v_north_fps], sim[prp.v_east_fps]
-        track_deg = prp.Vector2(v_east_fps, v_north_fps).heading_deg()
+        track_deg = sim[prp.heading_deg]
         target_track_deg = sim[self.target_track_deg]
-        error_deg = utils.reduce_reflex_angle_deg(track_deg - target_track_deg)
+        error_deg = utils.reduce_reflex_angle_deg(target_track_deg - track_deg)
         sim[self.track_error_deg] = error_deg
 
     def _update_altitude_error(self, sim: Simulation):
@@ -289,19 +278,48 @@ class Heading2ControlTask(FlightTask):
         sim[self.steps_left] -= 1
 
     def _get_reward(self, state, sim: Simulation) -> float:
-        reward = 10.0
+        """
+        Compute reward for task
+        """
+        # Reward is built as a geometric mean of scaled gaussian rewards for each relevant variable
+        heading_error_scale = 5.0  # degrees
+        heading_r = math.exp(-((sim[self.track_error_deg] / heading_error_scale) ** 2))
+
+        alt_error_scale = 50.0  # feet
+        alt_r = math.exp(-((sim[self.altitude_error_ft] / alt_error_scale) ** 2))
+
+        roll_error_scale = 0.35  # radians ~= 20 degrees
+        roll_r = math.exp(-((sim[prp.roll_rad] / roll_error_scale) ** 2))
+
+        """speed_error_scale = 10  # fps (~5%)
+        speed_r = math.exp(-(((sim[prp.u_fps] - self.aircraft.get_cruise_speed_fps()) / speed_error_scale) ** 2))
+
+        # accel scale in "g"s
+        accel_error_scale_x = 0.1
+        accel_error_scale_y = 0.1
+        accel_error_scale_z = 0.5
+        try:
+            accel_r = math.exp(
+                -(
+                    (sim[prp.accelerations_n_pilot_x_norm] / accel_error_scale_x) ** 2
+                    + (sim[prp.accelerations_n_pilot_y_norm] / accel_error_scale_y) ** 2
+                    + ((sim[prp.accelerations_n_pilot_z_norm] + 1) / accel_error_scale_z) ** 2
+                )  # normal value for z component is -1 g
+            ) ** (
+                1 / 3
+            )  # geometric mean
+        except OverflowError:
+            accel_r = 0"""
+
+        reward = (heading_r * alt_r * roll_r) ** (1 / 3)
         return reward
 
     def _is_terminal(self, sim: Simulation) -> bool:
         # terminate when time >= max, but use math.isclose() for float equality test
+        is_heading_out_of_bounds = abs(sim[self.track_error_deg]) > 10
+        is_altitude_out_of_bounds = abs(sim[self.altitude_error_ft]) > 250
         terminal_step = sim[self.steps_left] <= 0
-        state_quality = 1
-        state_out_of_bounds = state_quality < self.MIN_STATE_QUALITY  # TODO: issues if sequential?
-        return terminal_step or state_out_of_bounds or self._altitude_out_of_bounds(sim)
-
-    def _altitude_out_of_bounds(self, sim: Simulation) -> bool:
-        altitude_error_ft = sim[self.altitude_error_ft]
-        return abs(altitude_error_ft) > self.MAX_ALTITUDE_DEVIATION_FT
+        return terminal_step or is_altitude_out_of_bounds or is_heading_out_of_bounds
 
     def _new_episode_init(self, sim: Simulation) -> None:
         super()._new_episode_init(sim)

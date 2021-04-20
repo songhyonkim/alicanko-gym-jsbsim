@@ -30,10 +30,16 @@ w_fps = BoundedProperty('velocities/w-fps', 'body frame z-axis velocity [ft/s]',
 v_north_fps = BoundedProperty('velocities/v-north-fps', 'velocity true north [ft/s]', float('-inf'), float('+inf'))
 v_east_fps = BoundedProperty('velocities/v-east-fps', 'velocity east [ft/s]', float('-inf'), float('+inf'))
 v_down_fps = BoundedProperty('velocities/v-down-fps', 'velocity downwards [ft/s]', float('-inf'), float('+inf'))
+vc_fps = BoundedProperty("velocities/vc-fps", "airspeed in knots", 0, 4400)
 p_radps = BoundedProperty('velocities/p-rad_sec', 'roll rate [rad/s]', -2 * math.pi, 2 * math.pi)
 q_radps = BoundedProperty('velocities/q-rad_sec', 'pitch rate [rad/s]', -2 * math.pi, 2 * math.pi)
 r_radps = BoundedProperty('velocities/r-rad_sec', 'yaw rate [rad/s]', -2 * math.pi, 2 * math.pi)
 altitude_rate_fps = Property('velocities/h-dot-fps', 'Rate of altitude change [ft/s]')
+
+# accelerations
+accelerations_n_pilot_x_norm = Property('accelerations/n-pilot-x-norm', 'pilot body x-axis acceleration, normalised')
+accelerations_n_pilot_y_norm = Property('accelerations/n-pilot-y-norm', 'pilot body y-axis acceleration, normalised')
+accelerations_n_pilot_z_norm = Property('accelerations/n-pilot-z-norm', 'pilot body z-axis acceleration, normalised')
 
 # controls state
 aileron_left = BoundedProperty('fcs/left-aileron-pos-norm', 'left aileron position, normalised', -1, 1)

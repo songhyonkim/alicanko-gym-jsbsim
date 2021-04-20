@@ -1,1 +1,1 @@
-py test_agent.py JSBSim-Heading2ControlTask-F16-v0 ddpg F16FDM-100000
+py test_agent.py JSBSim-Heading2ControlTask-F16-v0 ddpg best_model

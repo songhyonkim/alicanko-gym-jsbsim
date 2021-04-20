@@ -2,7 +2,7 @@ import gym
 import argparse
 import gym_jsbsim
 from gym_jsbsim.agents import Agents
-from stable_baselines3.common.vec_env import DummyVecEnv
+from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 
 
 def main():
@@ -14,6 +14,7 @@ def main():
 
     env = gym.make(args.env)
     env = DummyVecEnv([lambda: env])
+    env = VecNormalize(env)
 
     model = Agents.load_model(env, args.algorithm, args.model)
     model.set_env(env)
