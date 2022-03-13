@@ -1,1 +1,1 @@
-py test_agent.py JSBSim-Heading2ControlTask-F16-v0 ddpg best_model
+venv\Scripts\python.exe test_agent.py

@@ -1,27 +1,28 @@
-import gym
-import argparse
+import pickle
+import yaml
 import gym_jsbsim
 from gym_jsbsim.agents import Agents
-from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
+from stable_baselines3.common.env_util import make_vec_env
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("env", type=str)
-    parser.add_argument("algorithm", type=str)
-    parser.add_argument("model", type=str)
-    args = parser.parse_args()
+    with open('config.yml') as file:
+        configurations = yaml.safe_load(file)
+    configurations['general']['flightgear'] = 'true'
+    configurations['general']['agent_interaction_freq'] = 5
+    with open('config.yml', 'w') as file:
+        yaml.dump(configurations, file)
 
-    env = gym.make(args.env)
-    env = DummyVecEnv([lambda: env])
-    env = VecNormalize(env)
+    env_make = make_vec_env(configurations['general']['env'], n_envs=1, seed=0)
+    with open(configurations['test']['model'] + '/env.pkl', "rb") as file_handler:
+        env = pickle.load(file_handler)
+    env.set_venv(env_make)
 
-    model = Agents.load_model(env, args.algorithm, args.model)
-    model.set_env(env)
+    model = Agents.load_model(env, configurations['general']['algorithm'], configurations['test']['model'] + '/best_model')
 
-    done = False
     obs = env.reset()
-    while not done:
+
+    while True:
         action, _state = model.predict(obs, deterministic=True)
         obs, reward, done, info = env.step(action)
         env.render(mode="human")

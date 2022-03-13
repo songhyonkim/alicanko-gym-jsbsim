@@ -1,1 +1,1 @@
-py train_agent.py JSBSim-Heading2ControlTask-F16-v0 ddpg none 1000000
+venv\Scripts\python.exe train_agent.py

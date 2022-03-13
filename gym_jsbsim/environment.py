@@ -1,4 +1,5 @@
 import gym
+import yaml
 import numpy as np
 from gym_jsbsim.task import Heading2ControlTask
 from gym_jsbsim.simulation import Simulation
@@ -20,11 +21,14 @@ class JsbSimEnv(gym.Env):
     ATTRIBUTION: this class implements the OpenAI Gym Env API. Method
     docstrings have been adapted or copied from the OpenAI Gym source code.
     """
-    JSBSIM_DT_HZ: int = 60  # JSBSim integration frequency
+    with open('config.yml', 'r') as file:
+        configurations = yaml.safe_load(file)
+    JSBSIM_DT_HZ: int = configurations['general']['sim_frequency']  # JSBSim integration frequency
+    AGENT_INTERACTION_HZ: int = configurations['general']['agent_interaction_freq']
     metadata = {'render.modes': ['human', 'csv']}
 
     def __init__(self, task_type: Type[Heading2ControlTask], aircraft: Aircraft = f16,
-                 agent_interaction_freq: int = 5):
+                 agent_interaction_freq: int = AGENT_INTERACTION_HZ):
         """
         Constructor. Inits some internal state, but JsbSimEnv.reset() must be
         called first before interacting with environment.

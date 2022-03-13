@@ -203,14 +203,27 @@ class Heading2ControlTask(FlightTask):
     INITIAL_HEADING_DEG = 270
     DEFAULT_EPISODE_TIME_S = 60.
     """New variables"""
-    target_track_deg = BoundedProperty('target/track-deg', 'desired heading [deg]',
-                                       prp.heading_deg.min, prp.heading_deg.max)
-    track_error_deg = BoundedProperty('error/track-error-deg',
-                                      'error to desired track [deg]', -180, 180)
+    target_heading_deg = BoundedProperty('target/heading-deg', 'desired heading [deg]',
+                                         prp.heading_deg.min, prp.heading_deg.max)
+    heading_error_deg = BoundedProperty('error/heading-error-deg',
+                                        'error to desired heading [deg]', -180, 180)
     altitude_error_ft = BoundedProperty('error/altitude-error-ft',
                                         'error to desired altitude [ft]',
-                                        prp.altitude_sl_ft.min,
-                                        prp.altitude_sl_ft.max)
+                                        prp.altitude_sl_ft.min, prp.altitude_sl_ft.max)
+    pitch_error_rad = BoundedProperty('error/pitch-error-rad',
+                                      'error to desired pitch [rad]',
+                                      prp.pitch_rad.min,
+                                      prp.pitch_rad.max)
+    roll_error_rad = BoundedProperty('error/roll-error-rad',
+                                     'error to desired roll [rad]',
+                                     prp.roll_rad.min,
+                                     prp.roll_rad.max)
+    speed_error_fps = BoundedProperty('error/speed-error-fps',
+                                      'error to desired speed [fps]',
+                                      prp.u_fps.min,
+                                      prp.u_fps.max)
+    previous_pitch = 0.0
+    previous_roll = 0.0
 
     def __init__(self, step_frequency_hz: float, aircraft: Aircraft, episode_time_s: float = DEFAULT_EPISODE_TIME_S):
         """
@@ -220,25 +233,20 @@ class Heading2ControlTask(FlightTask):
         :param aircraft: the aircraft used in the simulation
         """
         self.max_time_s = episode_time_s
-        episode_steps = math.ceil(self.max_time_s * step_frequency_hz)
+        episode_steps = math.ceil(self.max_time_s * step_frequency_hz) + 1
         self.steps_left = BoundedProperty('info/steps_left', 'steps remaining in episode', 0, episode_steps)
         self.aircraft = aircraft
         self.state_variables = (self.altitude_error_ft,
-                                self.track_error_deg,
-                                self.steps_left,
-                                prp.pitch_rad,
-                                prp.roll_rad,
-                                prp.v_down_fps,
-                                prp.vc_fps,
-                                prp.p_radps,
-                                prp.q_radps,
-                                prp.r_radps)
+                                self.heading_error_deg,
+                                self.pitch_error_rad,
+                                self.roll_error_rad,
+                                prp.p_radps, prp.q_radps, prp.r_radps)
         self.action_variables = (prp.aileron_cmd, prp.elevator_cmd)
         super().__init__()
 
     def get_initial_conditions(self) -> Dict[Property, float]:
         init_conditions = {prp.initial_altitude_ft: self.INITIAL_ALTITUDE_FT,
-                           prp.initial_terrain_altitude_ft: 0.00000001,
+                           prp.initial_terrain_altitude_ft: 1000,
                            prp.initial_longitude_geoc_deg: 32.565556,
                            prp.initial_latitude_geod_deg: 40.078889,  # corresponds to Akinci
                            prp.initial_u_fps: self.aircraft.get_cruise_speed_fps(),
@@ -251,28 +259,40 @@ class Heading2ControlTask(FlightTask):
                            prp.initial_heading_deg: self.INITIAL_HEADING_DEG,
                            prp.gear: 0,
                            prp.gear_all_cmd: 0,
+                           prp.all_engine_running: -1,
                            prp.rudder_cmd: 0,
-                           prp.throttle_cmd: 0.8,
+                           prp.throttle_cmd: 0.6,
                            prp.mixture_cmd: 1,
                            }
         return init_conditions
 
     def _update_custom_properties(self, sim: Simulation) -> None:
-        self._update_track_error(sim)
+        self._update_heading_error(sim)
         self._update_altitude_error(sim)
+        self._update_pitch_error(sim)
+        self._update_roll_error(sim)
+        self._update_speed_error(sim)
         self._decrement_steps_left(sim)
 
-    def _update_track_error(self, sim: Simulation):
-        track_deg = sim[prp.heading_deg]
-        target_track_deg = sim[self.target_track_deg]
-        error_deg = utils.reduce_reflex_angle_deg(target_track_deg - track_deg)
-        sim[self.track_error_deg] = error_deg
+    def _update_heading_error(self, sim: Simulation):
+        error_deg = utils.reduce_reflex_angle_deg(sim[self.target_heading_deg] - sim[prp.heading_deg])
+        sim[self.heading_error_deg] = error_deg
 
     def _update_altitude_error(self, sim: Simulation):
-        altitude_ft = sim[prp.altitude_sl_ft]
-        target_altitude_ft = self._get_target_altitude()
-        error_ft = altitude_ft - target_altitude_ft
+        error_ft = self._get_target_altitude() - sim[prp.altitude_sl_ft]
         sim[self.altitude_error_ft] = error_ft
+
+    def _update_pitch_error(self, sim: Simulation):
+        error_rad = 0.0 - sim[prp.pitch_rad]
+        sim[self.pitch_error_rad] = error_rad
+
+    def _update_roll_error(self, sim: Simulation):
+        error_rad = 0.0 - sim[prp.roll_rad]
+        sim[self.roll_error_rad] = error_rad
+
+    def _update_speed_error(self, sim: Simulation):
+        error_fps = self.aircraft.get_cruise_speed_fps() - sim[prp.u_fps]
+        sim[self.speed_error_fps] = error_fps
 
     def _decrement_steps_left(self, sim: Simulation):
         sim[self.steps_left] -= 1
@@ -283,16 +303,27 @@ class Heading2ControlTask(FlightTask):
         """
         # Reward is built as a geometric mean of scaled gaussian rewards for each relevant variable
         heading_error_scale = 5.0  # degrees
-        heading_r = math.exp(-((sim[self.track_error_deg] / heading_error_scale) ** 2))
+        heading_r = math.exp(-((sim[self.heading_error_deg] / heading_error_scale) ** 2))
 
         alt_error_scale = 50.0  # feet
         alt_r = math.exp(-((sim[self.altitude_error_ft] / alt_error_scale) ** 2))
 
+        pitch_error_scale = 0.1  # radians
+        pitch_r = math.exp(-((sim[self.pitch_error_rad] / pitch_error_scale) ** 2))
+
+        roll_error_scale = 0.1  # radians
+        roll_r = math.exp(-((sim[self.roll_error_rad] / roll_error_scale) ** 2))
+        """
+        pitch_error_scale = 0.1  # radians
+        pitch_r = math.exp(-(((sim[prp.pitch_rad] - self.previous_pitch) / pitch_error_scale) ** 2))
+        self.previous_pitch = sim[prp.pitch_rad]
+
+
         roll_error_scale = 0.35  # radians ~= 20 degrees
         roll_r = math.exp(-((sim[prp.roll_rad] / roll_error_scale) ** 2))
-
-        """speed_error_scale = 10  # fps (~5%)
-        speed_r = math.exp(-(((sim[prp.u_fps] - self.aircraft.get_cruise_speed_fps()) / speed_error_scale) ** 2))
+        
+        speed_error_scale = 40  # fps (~5%)
+        speed_r = math.exp(-((sim[self.speed_error_fps] / speed_error_scale) ** 2))
 
         # accel scale in "g"s
         accel_error_scale_x = 0.1
@@ -316,17 +347,26 @@ class Heading2ControlTask(FlightTask):
 
     def _is_terminal(self, sim: Simulation) -> bool:
         # terminate when time >= max, but use math.isclose() for float equality test
-        is_heading_out_of_bounds = abs(sim[self.track_error_deg]) > 10
-        is_altitude_out_of_bounds = abs(sim[self.altitude_error_ft]) > 250
+        is_heading_out_of_bounds = abs(sim[self.heading_error_deg]) > 10
+        is_altitude_out_of_bounds = abs(sim[self.altitude_error_ft]) > 100
+        # is_speed_out_of_bounds = abs(sim[self.speed_error_fps]) > 100
         terminal_step = sim[self.steps_left] <= 0
         return terminal_step or is_altitude_out_of_bounds or is_heading_out_of_bounds
 
     def _new_episode_init(self, sim: Simulation) -> None:
         super()._new_episode_init(sim)
+        sim[prp.gear] = 0
+        sim[prp.gear_all_cmd] = 0
+        sim[prp.all_engine_running] = -1
+        sim[prp.elevator_cmd] = 0
+        sim[prp.aileron_cmd] = 0
+        sim[prp.rudder_cmd] = 0
+        sim[prp.throttle_cmd] = 0.6
+        sim[prp.mixture_cmd] = 1
         sim[self.steps_left] = self.steps_left.max
-        sim[self.target_track_deg] = self._get_target_track()
+        sim[self.target_heading_deg] = self._get_target_heading()
 
-    def _get_target_track(self) -> float:
+    def _get_target_heading(self) -> float:
         # use the same, initial heading every episode
         return self.INITIAL_HEADING_DEG
 
@@ -334,6 +374,6 @@ class Heading2ControlTask(FlightTask):
         return self.INITIAL_ALTITUDE_FT
 
     def get_props_to_output(self) -> Tuple:
-        return (prp.u_fps, prp.altitude_sl_ft, self.altitude_error_ft, self.target_track_deg,
-                self.track_error_deg, prp.roll_rad, prp.sideslip_deg, self.last_agent_reward,
+        return (prp.u_fps, prp.altitude_sl_ft, self.altitude_error_ft, self.target_heading_deg,
+                self.heading_error_deg, prp.roll_rad, prp.sideslip_deg, self.last_agent_reward,
                 self.steps_left)

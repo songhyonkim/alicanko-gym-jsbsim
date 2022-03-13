@@ -11,7 +11,7 @@ from stable_baselines3.common.noise import OrnsteinUhlenbeckActionNoise
 
 class Agents:
     @staticmethod
-    def get_model(env, algorithm):
+    def create_model(env, algorithm, save_path):
         # the noise object
         n_actions = env.action_space.shape[-1]
         action_noise = OrnsteinUhlenbeckActionNoise(mean=np.zeros(n_actions),
@@ -28,13 +28,19 @@ class Agents:
                         train_freq=(10, "step"),
                         action_noise=action_noise,
                         policy_kwargs=dict(optimizer_class=th.optim.AdamW),
-                        tensorboard_log="./tensor_logs/")
+                        tensorboard_log=save_path)
         elif algorithm == "td3":
-            return TD3(TD3_MlpPolicy, env, action_noise=action_noise)
+            return TD3(TD3_MlpPolicy,
+                       env,
+                       action_noise=action_noise,
+                       tensorboard_log=save_path)
         elif algorithm == "sac":
-            return SAC(SAC_MlpPolicy, env, action_noise=action_noise)
+            return SAC(SAC_MlpPolicy,
+                       env,
+                       action_noise=action_noise,
+                       tensorboard_log=save_path)
         else:
-            raise Exception('Unknown agent type!')
+            raise Exception("--> Alican's LOG: Unknown agent type!")
 
     @staticmethod
     def load_model(env, algorithm, filename):
@@ -45,4 +51,4 @@ class Agents:
         elif algorithm == "sac":
             return SAC.load(filename, env=env)
         else:
-            raise Exception('Unknown agent type!')
+            raise Exception("--> Alican's LOG: Unknown agent type!")

@@ -1,6 +1,7 @@
 import jsbsim
 import os
 import time
+import yaml
 from typing import Dict, Union
 import gym_jsbsim.properties as prp
 from gym_jsbsim.aircraft import Aircraft, f16
@@ -11,9 +12,7 @@ class Simulation(object):
     A class which wraps an instance of JSBSim and manages communication with it.
     """
     encoding = 'utf-8'  # encoding of bytes returned by JSBSim Cython funcs
-    JSBSIM_ROOT_DIR = os.path.abspath("jsbsim")
-    LONGITUDINAL = 'longitudinal'
-    FULL = 'full'
+    JSBSIM_ROOT_DIR = os.path.abspath("jsbsim_conf")
 
     def __init__(self,
                  sim_frequency_hz: float = 60.0,
@@ -23,17 +22,22 @@ class Simulation(object):
         Constructor. Creates an instance of JSBSim and sets initial conditions.
 
         :param sim_frequency_hz: the JSBSim integration frequency in Hz.
-        :param aircraft_model_name: name of aircraft to be loaded.
-            JSBSim looks for file \model_name\model_name.xml from root dir.
+        :param aircraft: name of aircraft to be loaded.
+            JSBSim looks for file \\model_name\\model_name.xml from root dir.
         :param init_conditions: dict mapping properties to their initial values.
             Defaults to None, causing a default set of initial props to be used.
         """
         self.jsbsim = jsbsim.FGFDMExec(root_dir=self.JSBSIM_ROOT_DIR)
         self.jsbsim.set_debug_level(0)
+        with open('config.yml', 'r') as file:
+            configurations = yaml.safe_load(file)
+        if configurations['general']['flightgear'] == 'true':
+            self.jsbsim.enable_output()
+        else:
+            self.jsbsim.disable_output()
         self.sim_dt = 1.0 / sim_frequency_hz
         self.aircraft = aircraft
         self.initialise(self.sim_dt, self.aircraft.jsbsim_id, init_conditions)
-        #self.jsbsim.disable_output()
         self.wall_clock_dt = None
 
     def __getitem__(self, prop: Union[prp.BoundedProperty, prp.Property]) -> float:
@@ -190,19 +194,3 @@ class Simulation(object):
             for j in range(n):
                 propulsion.get_engine(j).init_running()
             propulsion.get_steady_state()
-
-    def set_throttle_mixture_controls(self, throttle_cmd: float, mixture_cmd: float):
-        """
-        Sets throttle and mixture settings
-
-        If an aircraft is multi-engine and has multiple throttle_cmd and mixture_cmd
-        controls, sets all of them. Currently only supports up to two throttles/mixtures.
-        """
-        self[prp.throttle_cmd] = throttle_cmd
-        self[prp.mixture_cmd] = mixture_cmd
-
-        try:
-            self[prp.throttle_1_cmd] = throttle_cmd
-            self[prp.mixture_1_cmd] = mixture_cmd
-        except KeyError:
-            pass  # must be single-control aircraft

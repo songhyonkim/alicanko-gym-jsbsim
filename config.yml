@@ -1,0 +1,11 @@
+general:
+  agent_interaction_freq: 5
+  algorithm: sac
+  env: JSBSim-Heading2ControlTask-F16-v0
+  flightgear: 'true'
+  sim_frequency: 50
+test:
+  model: trained/March 06, 2022 - 17.02
+train:
+  model: none
+  timesteps: 100000
