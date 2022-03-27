@@ -15,7 +15,7 @@ def main():
     # get init time and use it for save path
     now = datetime.now()
     save_path = './trained/' + now.strftime("%B %d, %Y - %H.%M")
-    os.mkdir(save_path)
+    os.makedirs(save_path, exist_ok=True)
     # using sound library for pure fun
     engine = pyttsx3.init()  # object creation
     engine.setProperty('rate', 150)     # setting up new voice rate

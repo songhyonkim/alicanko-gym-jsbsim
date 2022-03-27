@@ -1,3 +1,7 @@
+import os
+import math
+import time
+from datetime import datetime
 import matplotlib.pyplot as plt
 import gym_jsbsim.properties as prp
 from gym_jsbsim.simulation import Simulation
@@ -15,10 +19,10 @@ class AxesTuple(NamedTuple):
 class FigureVisualiser(object):
     """ Class for manging a matplotlib Figure displaying agent state and actions """
     PLOT_PAUSE_SECONDS = 0.0001
-    LABEL_TEXT_KWARGS = dict(fontsize=18,
+    LABEL_TEXT_KWARGS = dict(fontsize=14,
                              horizontalalignment='right',
                              verticalalignment='baseline')
-    VALUE_TEXT_KWARGS = dict(fontsize=18,
+    VALUE_TEXT_KWARGS = dict(fontsize=14,
                              horizontalalignment='left',
                              verticalalignment='baseline')
     TEXT_X_POSN_LABEL = 0.8
@@ -41,8 +45,37 @@ class FigureVisualiser(object):
         """
         self.print_props = print_props
         self.figure: plt.Figure = None
+        self.csv_file = None
         self.axes: AxesTuple = None
         self.value_texts: Tuple[plt.Text] = None
+
+    def csv(self, sim: Simulation) -> None:
+        """
+        Save the episode to csv file.
+
+        :param sim: Simulation that will be saved as csv file.
+        """
+        if not self.csv_file:
+            now = datetime.now()
+            save_path = './csv_logs'
+            save_file = save_path + '/F-16 (' + now.strftime("%Y%m%d-%H%M%S") + ') [Blue].csv'
+            os.makedirs(save_path, exist_ok=True)
+            self.csv_file = open(save_file, 'w')
+            self.csv_file.write('Time,Longitude,Latitude,Altitude,Roll (deg),Pitch (deg),Yaw (deg)\n')
+            print(f'CSV file opened: {save_file}')
+            time.sleep(1)
+
+        """ save """
+        Time        = sim[prp.sim_time_s]
+        Longitude   = sim[prp.lng_geoc_deg]
+        Latitude    = sim[prp.lat_geod_deg] # position/lat-geod-deg vs. position/lat-gc-deg 확인 필요
+        Altitude    = sim[prp.altitude_sl_ft]
+        Roll_deg    = math.degrees(sim[prp.roll_rad])
+        Pitch_deg   =  math.degrees(sim[prp.pitch_rad])
+        Yaw_deg     = sim[prp.heading_deg]
+
+        self.csv_file.write(f'{Time},{Longitude},{Latitude},{Altitude},{Roll_deg},{Pitch_deg},{Yaw_deg}\n')
+
 
     def plot(self, sim: Simulation) -> None:
         """
@@ -70,6 +103,8 @@ class FigureVisualiser(object):
             plt.close(self.figure)
             self.figure = None
             self.axes = None
+        if self.csv_file:
+            self.csv_file.close()
 
     def _plot_configure(self):
         """
@@ -80,7 +115,7 @@ class FigureVisualiser(object):
             axes: an AxesTuple object with references to all figure subplot axes
         """
         plt.ion()  # interactive mode allows dynamic updating of plot
-        figure = plt.figure(figsize=(6, 11))
+        figure = plt.figure(figsize=(4, 7))
 
         spec = plt.GridSpec(nrows=3,
                             ncols=2,

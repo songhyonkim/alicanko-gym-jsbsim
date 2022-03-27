@@ -114,11 +114,18 @@ class JsbSimEnv(gym.Env):
 
         :param mode: str, the mode to render with
         """
-        if mode == 'human':
+        if mode in ('human', 'csv'):
             if not self.figure_visualiser:
                 self.figure_visualiser = FigureVisualiser(self.sim,
                                                           self.task.get_props_to_output())
             self.figure_visualiser.plot(self.sim)
+
+            """
+            save flight log to csv file in logs folder.
+            """
+            if mode == 'csv':
+                self.figure_visualiser.csv(self.sim)
+
         else:
             super().render(mode=mode)
 
@@ -126,7 +133,7 @@ class JsbSimEnv(gym.Env):
         """ Cleans up this environment's objects
 
         Environments automatically close() when garbage collected or when the
-        program exits.
+        program exits.`
         """
         if self.sim:
             self.sim.close()
