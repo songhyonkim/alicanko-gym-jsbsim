@@ -26,6 +26,23 @@ The ultimate goal of this project is to disclose the gym environment for ai pilo
 (.venv) > deactivate.bat
 > 
 ```
+## How to train?
+
+```
+> .venv\Scripts\activate.bat
+(.venv) > train.bat
+(.venv) > deactivate.bat
+> 
+```
+
+## How to test?
+
+```
+> .venv\Scripts\activate.bat
+(.venv) > test.bat
+(.venv) > deactivate.bat
+> 
+```
 
 # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ The following are not yet organized.
 

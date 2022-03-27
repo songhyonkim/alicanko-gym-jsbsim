@@ -1,1 +1,1 @@
-venv\Scripts\python.exe train_agent.py
+.venv\Scripts\python.exe train_agent.py
