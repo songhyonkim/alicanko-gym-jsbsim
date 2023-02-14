@@ -31,7 +31,7 @@
 ## Visualize
 
 ```
-fgfs --fdm=null --native-fdm=socket,in,60,localhost,5550,udp --aircraft=f16-block-52
+fgfs --fdm=null --native-fdm=socket,in,60,localhost,5550,udp --aircraft=f16-block-52 --airport=RKJJ --disable-ai-traffic
 ```
 
 

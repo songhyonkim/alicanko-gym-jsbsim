@@ -199,7 +199,7 @@ class Heading2ControlTask(FlightTask):
     A task in which the agent must perform steady, level flight maintaining its
     initial heading.
     """
-    INITIAL_ALTITUDE_FT = 5000
+    INITIAL_ALTITUDE_FT = 15000
     INITIAL_HEADING_DEG = 270
     DEFAULT_EPISODE_TIME_S = 60.
     """New variables"""
