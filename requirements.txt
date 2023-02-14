@@ -7,3 +7,4 @@ PyYAML==6.0
 setuptools==57.0.0
 stable_baselines3==1.4.0
 torch==1.10.2
+tensorboard==2.8.0

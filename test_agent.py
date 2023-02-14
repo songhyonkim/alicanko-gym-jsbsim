@@ -22,10 +22,18 @@ def main():
 
     obs = env.reset()
 
+    mode = configurations['test']['mode']
+    ''' 임시
+    if mode == 'csv':
+        now = datetime.now()
+        save_path = './logs/' + now.strftime("%B %d, %Y - %H.%M")
+        os.makedirs(save_path, exist_ok=True)
+    '''
+
     while True:
         action, _state = model.predict(obs, deterministic=True)
         obs, reward, done, info = env.step(action)
-        env.render(mode="human")
+        env.render(mode=mode)
 
 
 if __name__ == "__main__":
