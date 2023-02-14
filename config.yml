@@ -5,6 +5,7 @@ general:
   flightgear: 'true'
   sim_frequency: 50
 test:
+  mode: human
   model: trained/September 18, 2022 - 07.14
 train:
   model: none

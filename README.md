@@ -1,19 +1,4 @@
-# gym-ai-pilot : Introduction
-
-This project was created to share the "AI Pilot Study."
-The "AI Pilot Study" is similar to the AlphaDogfight promoted by DARPA, and related articles can be found below.
-
-* [AlphaDogfight Trials Final Event](https://youtu.be/NzdhIA2S35w)
-![AlphaDogFight: Heron vs Lockeed](screenshots/AlphaDogFight_Heron-vs-Lockeed.png) <Credit: DARPA/Johns Hopkins APL>
-* [Air Combat Evolution (ACE)](https://www.darpa.mil/program/air-combat-evolution)
-* [AI Bests Human Fighter Pilot in AlphaDogfight Trial at Johns Hopkins APL](https://www.jhuapl.edu/PressRelease/200828-AI-bests-human-fighter-pilot-in-AlphaDogfight-trial-at-APL)
-* [AI Claims "Flawless Victory" Going Undefeated In Digital Dogfight With Human Fighter Pilot](https://www.thedrive.com/the-war-zone/35888/ai-claims-flawless-victory-going-undefeated-in-digital-dogfight-with-human-fighter-pilot)
-* [AI-Controlled F-16s Are Now Working As A Team In DARPA's Virtual Dogfights](https://www.thedrive.com/the-war-zone/39899/darpa-now-has-ai-controlled-f-16s-working-as-a-team-in-virtual-dogfights)
-
-
-The ultimate goal of this project is to disclose the gym environment for ai pilot study and encourage voluntary participation of interested researchers and developers.
-
-# Beginner's Guide
+# Update
 
 ## Set Python virtual environment(for windows os)
 
@@ -43,10 +28,14 @@ The ultimate goal of this project is to disclose the gym environment for ai pilo
 (.venv) > deactivate.bat
 > 
 ```
+## Visualize
 
-# ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ The following are not yet organized.
+```
+fgfs --fdm=null --native-fdm=socket,in,60,localhost,5550,udp --aircraft=f16-block-52
+```
 
 
+---
 
 # Gym-Jsbsim
 
