@@ -40,6 +40,9 @@ class Simulation(object):
         self.initialise(self.sim_dt, self.aircraft.jsbsim_id, init_conditions)
         self.wall_clock_dt = None
 
+        # 추가 by shkim
+        self.set_simulation_time_factor(1)
+
     def __getitem__(self, prop: Union[prp.BoundedProperty, prp.Property]) -> float:
         """
         Retrieves specified simulation property.

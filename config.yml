@@ -5,7 +5,7 @@ general:
   flightgear: 'true'
   sim_frequency: 50
 test:
-  model: trained/March 06, 2022 - 17.02
+  model: trained/September 18, 2022 - 07.14
 train:
   model: none
   timesteps: 100000
