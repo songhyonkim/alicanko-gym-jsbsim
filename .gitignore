@@ -1,6 +1,6 @@
 *.egg*
 .idea
 *.pyc
-.venv/
-csv_logs/
-trained/
+.venv
+csv_logs
+#trained
