@@ -200,7 +200,7 @@ class Heading2ControlTask(FlightTask):
     initial heading.
     """
     INITIAL_ALTITUDE_FT = 15000
-    INITIAL_HEADING_DEG = 270
+    INITIAL_HEADING_DEG = 90
     DEFAULT_EPISODE_TIME_S = 60.
     """New variables"""
     target_heading_deg = BoundedProperty('target/heading-deg', 'desired heading [deg]',
@@ -247,8 +247,8 @@ class Heading2ControlTask(FlightTask):
     def get_initial_conditions(self) -> Dict[Property, float]:
         init_conditions = {prp.initial_altitude_ft: self.INITIAL_ALTITUDE_FT,
                            prp.initial_terrain_altitude_ft: 1000,
-                           prp.initial_longitude_geoc_deg: 32.565556,
-                           prp.initial_latitude_geod_deg: 40.078889,  # corresponds to Akinci
+                           prp.initial_longitude_geoc_deg: 126.460724,
+                           prp.initial_latitude_geod_deg: 37.454378,  # corresponds to RKSI(Incheon Airport)
                            prp.initial_u_fps: self.aircraft.get_cruise_speed_fps(),
                            prp.initial_v_fps: 0,
                            prp.initial_w_fps: 0,
